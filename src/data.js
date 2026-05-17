@@ -233,17 +233,25 @@ export const gtmRags = ["green", "amber", "red", "unknown"]
 export const gtmPriorities = ["high", "medium", "low"]
 export const gtmCategories = ["Sales tooling", "AI / agents", "Outbound", "Customer success", "Field marketing", "Sales enablement", "Revenue ops", "Data / ops"]
 
-export const ragMeta = {
+const _ragMeta = {
   green:   { dot: "#10B981", chipBg: "#ECFDF5", chipText: "#047857", label: "Green",   border: "rag-green",   severity: 2 },
   amber:   { dot: "#F59E0B", chipBg: "#FFFBEB", chipText: "#B45309", label: "Amber",   border: "rag-amber",   severity: 1 },
   red:     { dot: "#F43F5E", chipBg: "#FFF1F2", chipText: "#BE123C", label: "Red",     border: "rag-red",     severity: 0 },
   unknown: { dot: "#94A3B8", chipBg: "#F1F5F9", chipText: "#475569", label: "Unknown", border: "rag-unknown", severity: 3 }
 }
-export const priorityMeta = {
+// Defensive: any unknown rag key falls back to "unknown" rather than throwing
+export const ragMeta = new Proxy(_ragMeta, {
+  get(target, prop) { return target[prop] || target.unknown }
+})
+
+const _priorityMeta = {
   high:   { bg: "#E0E7FF", text: "#3730A3", label: "High",   order: 0 },
   medium: { bg: "#E2E8F0", text: "#334155", label: "Medium", order: 1 },
   low:    { bg: "#F1F5F9", text: "#64748B", label: "Low",    order: 2 }
 }
+export const priorityMeta = new Proxy(_priorityMeta, {
+  get(target, prop) { return target[prop] || target.medium }
+})
 
 export const gtmCardFields = [
   { id: "stage",    label: "Stage",    defaultOn: true },
