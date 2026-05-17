@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { useStore } from '../App'
 import { ragMeta, priorityMeta, fmtWeekLabel, fmtWeekRange, fmtDate, dashboardSort } from '../data'
@@ -137,58 +137,6 @@ function OpsBrief() {
   const stalled = useMemo(() => projects.filter(p => (p.updatedDays ?? 0) >= 14), [projects])
   const deps = useMemo(() => projects.filter(p => (p.dependencies || []).length > 0 || (p.blockers || []).length > 0).slice(0, 5), [projects])
 
-  const [idea, setIdea] = useState('')
-  const [ideaLoading, setIdeaLoading] = useState(false)
-  const [ideaError, setIdeaError] = useState(false)
-
-  async function generateIdea() {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-    if (!apiKey || apiKey.includes('your-key')) {
-      setIdea('Add your VITE_ANTHROPIC_API_KEY to .env.local to enable AI-generated ideas from your live portfolio.')
-      return
-    }
-    setIdeaLoading(true); setIdeaError(false)
-    try {
-      const context = projects.slice(0, 12).map(p =>
-        `- ${p.name} [${p.category}] · ${p.stage} · RAG ${p.rag} · priority ${p.priority}${p.focus ? ' · FOCUS' : ''}${p.decision ? ' · decision-pending' : ''}${(p.updatedDays ?? 0) >= 14 ? ' · stalled' : ''}`
-      ).join('\n')
-      const prompt = `You are advising the GTM Operations Lead at Inforcer on her weekly portfolio. Generate ONE lateral, unexpected operational idea (1–2 sentences, max 220 chars) connecting two or more current projects in a non-obvious way, or sequencing work to extract leverage. Be specific — use real project names. Direct, actionable, no fluff.
-
-PORTFOLIO:
-${context}
-
-Focused this week: ${focus.map(p => p.name).join(', ') || '(none)'}
-Stalled: ${stalled.map(p => p.name).join(', ') || '(none)'}
-
-Output: just the idea text, no preamble.`
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 300,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error?.message || 'API error')
-      setIdea((data.content?.[0]?.text || '').trim().replace(/^["']|["']$/g, ''))
-    } catch (e) {
-      setIdeaError(true)
-      setIdea('Could not generate an idea right now — try refresh.')
-    } finally {
-      setIdeaLoading(false)
-    }
-  }
-
-  useEffect(() => { if (!idea && !ideaLoading) generateIdea() }, [])
-
   return (
     <div className="max-w-[900px] mx-auto px-6 py-8">
       <BriefHeader title="Weekly brief — Ops" generatedAt={generatedAt} refreshing={refreshing} onRegenerate={regenerate} switchTo={() => setViewMode('exec')} switchLabel="Switch to Exec brief" />
@@ -258,29 +206,6 @@ Output: just the idea text, no preamble.`
           )}
         </BriefCard>
 
-        <div className="rounded-xl p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F766E 0%, #1E40AF 60%, #4338CA 100%)' }}>
-          <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
-          <div className="relative">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/70">
-                <Icon name="lightbulb" size={12} /> Lateral idea — generated from your portfolio
-              </div>
-              <button onClick={generateIdea} disabled={ideaLoading}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 border border-white/20 text-white text-[11.5px] disabled:opacity-60">
-                <Icon name="refresh-cw" size={11} className={ideaLoading ? 'animate-spin' : ''} />
-                {ideaLoading ? 'Thinking…' : 'Refresh'}
-              </button>
-            </div>
-            <p className={'text-[16px] font-medium leading-snug max-w-[640px] ' + (ideaLoading ? 'opacity-60' : '')}>
-              {idea || 'Thinking…'}
-            </p>
-            <p className="text-[12px] text-white/70 mt-2">
-              {ideaError
-                ? <span className="inline-flex items-center gap-1"><Icon name="alert-triangle" size={11} /> Couldn't reach Claude — refresh to retry.</span>
-                : 'Claude reads your current focus, stalled items, and decisions pending — then suggests one sequencing or pairing move you might miss.'}
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   )
