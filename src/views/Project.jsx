@@ -1,7 +1,26 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, Component } from 'react'
 import Icon from '../components/Icon'
 import { useStore, useClickOutside } from '../App'
 import { ragMeta, priorityMeta, gtmStages, gtmRags, gtmPriorities, gtmCategories, computeScore, fmtDate } from '../data'
+
+class ProjectErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="max-w-[1100px] mx-auto px-6 py-16">
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-6">
+            <h2 className="text-[15px] font-semibold text-rose-800 mb-2">Something went wrong loading this project</h2>
+            <pre className="text-[12px] text-rose-700 whitespace-pre-wrap break-all bg-rose-100 rounded p-3">{this.state.error.message}{'\n'}{this.state.error.stack}</pre>
+            <button className="mt-4 btn-primary" onClick={() => this.setState({ error: null })}>Try again</button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 export default function ProjectDetailView() {
   const { projects, route, setRoute } = useStore()
@@ -17,7 +36,7 @@ export default function ProjectDetailView() {
       </div>
     )
   }
-  return <ProjectDetailInner key={project.id} project={project} />
+  return <ProjectErrorBoundary><ProjectDetailInner key={project.id} project={project} /></ProjectErrorBoundary>
 }
 
 function ProjectDetailInner({ project }) {
