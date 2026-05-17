@@ -218,7 +218,7 @@ function TabsNav() {
       <ul className="flex items-end gap-1 text-[13px] text-slate-400 overflow-x-auto nice-scroll">
         {visible.map(t => (
           <li key={t.id}>
-            <button onClick={() => setRoute({ tab: t.id })}
+            <button onClick={() => setRoute({ tab: t.id, projectId: null })}
               className={'tab-btn relative h-10 px-3 inline-flex items-center gap-1.5 hover:text-slate-200 whitespace-nowrap ' + (route.tab === t.id ? 'active' : '')}>
               <Icon name={t.icon} size={13} />
               {t.label}
@@ -228,7 +228,7 @@ function TabsNav() {
         {customTabs.length > 0 && <li className="text-slate-500 px-1 text-[11px] uppercase tracking-wider mb-2 ml-2 self-center">Custom</li>}
         {customTabs.map(t => (
           <li key={t.id}>
-            <button onClick={() => setRoute({ tab: t.id })}
+            <button onClick={() => setRoute({ tab: t.id, projectId: null })}
               className={'tab-btn relative h-10 px-3 inline-flex items-center gap-1.5 hover:text-slate-200 whitespace-nowrap ' + (route.tab === t.id ? 'active' : '')}>
               <Icon name="layout-grid" size={13} />
               {t.label}
@@ -267,7 +267,7 @@ function TabSettingsModal({ onClose }) {
     if (!name.trim()) return
     const id = addCustomTab({ label: name.trim(), view, groupBy })
     setName('')
-    setRoute({ tab: id })
+    setRoute({ tab: id, projectId: null })
     onClose()
   }
 
@@ -334,8 +334,8 @@ function TabSettingsModal({ onClose }) {
                 {customTabs.map(t => (
                   <div key={t.id} className="flex items-center gap-2 p-2 rounded-md border border-slate-200 bg-white">
                     <Icon name={t.view === 'kanban' ? 'columns-3' : 'rows-3'} size={13} className="text-slate-400" />
-                    <button onClick={() => { setRoute({ tab: t.id }); onClose() }} className="flex-1 text-left text-[13px] hover:text-indigo-600">{t.label}</button>
-                    <button onClick={() => { setRoute({ tab: t.id }); onClose() }}
+                    <button onClick={() => { setRoute({ tab: t.id, projectId: null }); onClose() }} className="flex-1 text-left text-[13px] hover:text-indigo-600">{t.label}</button>
+                    <button onClick={() => { setRoute({ tab: t.id, projectId: null }); onClose() }}
                       className="text-[11px] text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1 px-1.5 py-1 rounded hover:bg-slate-50">
                       <Icon name="settings" size={11} /> Edit inline
                     </button>
@@ -553,7 +553,7 @@ export default function App() {
   else if (route.tab === 'kanban') body = <KanbanView />
   else if (route.tab === 'brief') body = <WeeklyBriefView />
   else if (route.tab === 'decisions') body = <DecisionsLogView />
-  else if (route.tab === 'project' || route.projectId) body = <ProjectDetailView />
+  else if (route.tab === 'project') body = <ProjectDetailView />
   else if (customTab) body = <CustomTabView tab={customTab} />
   else body = <DashboardView />
 
