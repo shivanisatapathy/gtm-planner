@@ -26,7 +26,7 @@ function groupKeyLabel(g, k) {
 }
 
 // ---- KanbanBoard ----
-export function KanbanBoard({ projects, allProjects, groupBy, manual, setManual, canDrag, onCardClick, hideEmptyColumns, onMoveProject, fields }) {
+export function KanbanBoard({ projects, allProjects, groupBy, manual, setManual, canDrag, onCardClick, hideEmptyColumns, onMoveProject, fields, selectable, selection, onToggleSelect }) {
   const cfg = useMemo(() => getKanbanGroupConfig(allProjects || projects), [allProjects, projects, groupBy])
   const visibleFields = fields || defaultCardFields
 
@@ -126,6 +126,9 @@ export function KanbanBoard({ projects, allProjects, groupBy, manual, setManual,
                 onDragOver={onDragOver}
                 onDrop={e => onDropOnCard(e, col.key, p.id)}
                 onClick={() => onCardClick && onCardClick(p)}
+                selectable={selectable}
+                selected={selection?.includes(p.id)}
+                onToggleSelect={onToggleSelect ? () => onToggleSelect(p.id) : null}
               />
             ))}
           </div>
@@ -137,7 +140,7 @@ export function KanbanBoard({ projects, allProjects, groupBy, manual, setManual,
 
 // ---- KanbanView (built-in tab) ----
 export default function KanbanView({ fixedGroupBy, title } = {}) {
-  const { projects, setRoute, updateProject, identity } = useStore()
+  const { projects, setRoute, updateProject, identity, selection, toggleSelect } = useStore()
   const [groupBy, setGroupBy] = useState(fixedGroupBy || 'stage')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
@@ -213,6 +216,7 @@ export default function KanbanView({ fixedGroupBy, title } = {}) {
         canDrag={canDrag} fields={fields}
         onCardClick={p => setRoute({ tab: 'project', projectId: p.id })}
         onMoveProject={(pid, patch) => updateProject(pid, patch)}
+        selectable={identity.isOwner} selection={selection} onToggleSelect={toggleSelect}
       />
     </div>
   )
@@ -250,7 +254,7 @@ export function CardFieldsPicker({ fields, onChange, label = 'Card fields' }) {
   )
 }
 
-export function KanbanCard({ p, draggable, dragging, onDragStart, onDragOver, onDrop, onClick, fields }) {
+export function KanbanCard({ p, draggable, dragging, onDragStart, onDragOver, onDrop, onClick, fields, selectable, selected, onToggleSelect }) {
   const r = ragMeta[p.rag]
   const pr = priorityMeta[p.priority]
   const f = fields || defaultCardFields
@@ -261,10 +265,17 @@ export function KanbanCard({ p, draggable, dragging, onDragStart, onDragOver, on
   return (
     <article
       draggable={draggable} onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} onClick={onClick}
-      className={'card-hover bg-white rounded-lg shadow-card p-3 flex flex-col gap-2 ' + (dragging ? 'opacity-50 ' : '')}
+      className={'card-hover bg-white rounded-lg shadow-card p-3 flex flex-col gap-2 ' + (dragging ? 'opacity-50 ' : '') + (selected ? 'ring-2 ring-indigo-500 ' : '')}
       style={draggable ? { cursor: 'grab' } : {}}>
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-[13px] font-medium leading-tight">{p.name}</h4>
+        <div className="flex items-start gap-2 min-w-0">
+          {selectable && (
+            <input type="checkbox" checked={!!selected} onChange={onToggleSelect}
+              onClick={e => e.stopPropagation()}
+              className="mt-0.5 h-3.5 w-3.5 accent-indigo-600 cursor-pointer shrink-0" />
+          )}
+          <h4 className="text-[13px] font-medium leading-tight">{p.name}</h4>
+        </div>
         {p.focus && <Icon name="star" size={12} className="text-amber-500 shrink-0" />}
       </div>
       {has('category') && <div className="text-[11px] text-slate-500 -mt-1">{p.category}</div>}

@@ -53,7 +53,7 @@ function activeFilterCount(f) {
 }
 
 export default function CustomTabView({ tab }) {
-  const { projects, setRoute, updateProject, updateCustomTab, identity } = useStore()
+  const { projects, setRoute, updateProject, updateCustomTab, identity, selection, toggleSelect } = useStore()
   const t = useMemo(() => normalizeCustomTab(tab), [tab])
 
   const manualByGroup = t.manual || {}
@@ -109,9 +109,12 @@ export default function CustomTabView({ tab }) {
           fields={t.cardFields}
           onCardClick={p => setRoute({ tab: 'project', projectId: p.id })}
           onMoveProject={(pid, patch) => updateProject(pid, patch)}
+          selectable={identity.isOwner} selection={selection} onToggleSelect={toggleSelect}
         />
       ) : (
-        <TableView projects={filtered} sort={t.sort} fields={t.cardFields} onCardClick={p => setRoute({ tab: 'project', projectId: p.id })} />
+        <TableView projects={filtered} sort={t.sort} fields={t.cardFields}
+          onCardClick={p => setRoute({ tab: 'project', projectId: p.id })}
+          selectable={identity.isOwner} selection={selection} onToggleSelect={toggleSelect} />
       )}
     </div>
   )
@@ -304,7 +307,7 @@ function ActiveFilters({ t, updateFilters, clearAllFilters }) {
   )
 }
 
-function TableView({ projects, sort, fields, onCardClick }) {
+function TableView({ projects, sort, fields, onCardClick, selectable, selection, onToggleSelect }) {
   const visibleFields = fields || defaultCardFields
   const has = k => visibleFields.includes(k)
   const sorted = useMemo(() => {
@@ -325,6 +328,19 @@ function TableView({ projects, sort, fields, onCardClick }) {
       <table className="w-full text-[13px]">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-50/50">
+            {selectable && <th className="pl-4 pr-1 py-2 font-medium w-6">
+              <input type="checkbox"
+                checked={sorted.length > 0 && sorted.every(p => selection?.includes(p.id))}
+                onChange={e => {
+                  if (!onToggleSelect) return
+                  const allSel = sorted.every(p => selection?.includes(p.id))
+                  sorted.forEach(p => {
+                    if (allSel) { if (selection.includes(p.id)) onToggleSelect(p.id) }
+                    else { if (!selection.includes(p.id)) onToggleSelect(p.id) }
+                  })
+                }}
+                className="h-3.5 w-3.5 accent-indigo-600 cursor-pointer" />
+            </th>}
             <th className="px-4 py-2 font-medium w-8"></th>
             <th className="px-4 py-2 font-medium">Project</th>
             {has('stage')    && <th className="px-3 py-2 font-medium">Stage</th>}
@@ -340,7 +356,12 @@ function TableView({ projects, sort, fields, onCardClick }) {
           {sorted.map(p => {
             const r = ragMeta[p.rag]; const pr = priorityMeta[p.priority]
             return (
-              <tr key={p.id} onClick={() => onCardClick(p)} className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer">
+              <tr key={p.id} onClick={() => onCardClick(p)} className={'border-b border-slate-100 hover:bg-slate-50 cursor-pointer ' + (selection?.includes(p.id) ? 'bg-indigo-50/40' : '')}>
+                {selectable && <td className="pl-4 pr-1 py-2.5" onClick={e => e.stopPropagation()}>
+                  <input type="checkbox" checked={selection?.includes(p.id) || false}
+                    onChange={() => onToggleSelect && onToggleSelect(p.id)}
+                    className="h-3.5 w-3.5 accent-indigo-600 cursor-pointer" />
+                </td>}
                 <td className="px-4 py-2.5 text-center">{p.focus ? <Icon name="star" size={13} className="text-amber-500 inline-block" /> : <span className="text-slate-200">·</span>}</td>
                 <td className="px-4 py-2.5">
                   <div className="font-medium text-[#0B0D12] inline-flex items-center gap-2">

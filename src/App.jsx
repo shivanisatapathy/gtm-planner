@@ -17,6 +17,7 @@ import CustomTabView from './views/CustomTab'
 import ProjectDetailView from './views/Project'
 import WeeklyBriefView from './views/Brief'
 import DecisionsLogView from './views/DecisionsLog'
+import BulkActionBar from './components/BulkActionBar'
 
 // ============================================================================
 // Context
@@ -372,6 +373,7 @@ export default function App() {
   const [customTabs, setCustomTabs] = useState([])
   const [hiddenTabs, setHiddenTabs] = useState(() => loadLS('gtm.hiddenTabs', []))
   const [tabSettingsOpen, setTabSettingsOpen] = useState(false)
+  const [selection, setSelection] = useState([])
 
   // Load initial data
   useEffect(() => {
@@ -419,6 +421,7 @@ export default function App() {
   function signOut() {
     localStorage.removeItem('gtm.identity')
     setIdentity(null)
+    setSelection([])
   }
   function setViewMode(v) { setViewModeState(v); saveLS('gtm.viewMode', v) }
 
@@ -513,6 +516,50 @@ export default function App() {
     setHiddenTabs(arr => arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id])
   }
 
+  function toggleSelect(id) {
+    setSelection(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+  }
+  function selectAll(ids) { setSelection(ids) }
+  function clearSelection() { setSelection([]) }
+
+  function bulkUpdate(patch) {
+    const updates = projects.filter(p => selection.includes(p.id))
+      .map(p => ({ ...p, ...patch, updated: 'just now', updatedDays: 0 }))
+    setProjects(ps => ps.map(p => {
+      const u = updates.find(x => x.id === p.id)
+      return u || p
+    }))
+    updates.forEach(u => upsertProject(u))
+    markSaving()
+  }
+
+  function bulkDelete() {
+    const ids = [...selection]
+    setProjects(ps => ps.filter(p => !ids.includes(p.id)))
+    ids.forEach(id => storageRemoveProject(id))
+    setSelection([])
+    markSaving()
+  }
+
+  function exportSelectedCsv() {
+    const rows = projects.filter(p => selection.includes(p.id))
+    if (rows.length === 0) return
+    const headers = ['name','category','owner','sponsor','rag','priority','stage','score','target','updated','focus','decision','businessCase']
+    const esc = v => {
+      if (v === null || v === undefined) return ''
+      const s = String(v).replace(/"/g, '""')
+      return /[",\n]/.test(s) ? `"${s}"` : s
+    }
+    const csv = [headers.join(',')].concat(rows.map(r => headers.map(h => esc(r[h])).join(','))).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `gtm-projects-${new Date().toISOString().slice(0,10)}.csv`
+    document.body.appendChild(a); a.click(); a.remove()
+    URL.revokeObjectURL(url)
+  }
+
   const store = {
     identity, signIn, signOut,
     projects, updateProject, addProject, deleteProject,
@@ -523,7 +570,9 @@ export default function App() {
     customTabs, addCustomTab, updateCustomTab, removeCustomTab,
     hiddenTabs, toggleHiddenTab,
     openTabSettings: () => setTabSettingsOpen(true),
-    closeTabSettings: () => setTabSettingsOpen(false)
+    closeTabSettings: () => setTabSettingsOpen(false),
+    selection, toggleSelect, selectAll, clearSelection,
+    bulkUpdate, bulkDelete, exportSelectedCsv
   }
 
   if (!identity) {
@@ -566,6 +615,7 @@ export default function App() {
         </header>
         <main className="flex-1">{body}</main>
         {tabSettingsOpen && <TabSettingsModal onClose={() => setTabSettingsOpen(false)} />}
+        {identity.isOwner && selection.length > 0 && <BulkActionBar />}
       </div>
     </StoreCtx.Provider>
   )

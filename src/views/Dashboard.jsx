@@ -22,7 +22,7 @@ function StatTile({ label, value, sub, icon, accent }) {
 }
 
 export default function DashboardView() {
-  const { projects, filter, setFilter, setRoute, viewMode, updateProject, identity } = useStore()
+  const { projects, filter, setFilter, setRoute, viewMode, updateProject, identity, selection, toggleSelect, selectAll, clearSelection } = useStore()
   const [showAdd, setShowAdd] = useState(false)
 
   const stats = useMemo(() => {
@@ -101,6 +101,16 @@ export default function DashboardView() {
           ))}
         </div>
         <div className="flex-1" />
+        {identity.isOwner && filtered.length > 0 && (
+          <button onClick={() => {
+            const ids = filtered.map(p => p.id)
+            const allSelected = ids.every(id => selection.includes(id))
+            allSelected ? clearSelection() : selectAll(ids)
+          }} className="btn-ghost">
+            <Icon name="check-square" size={12} />
+            {filtered.every(p => selection.includes(p.id)) ? 'Deselect all' : 'Select all'}
+          </button>
+        )}
         <div className="text-[11px] text-slate-400 hidden md:inline-flex items-center gap-1">
           <Icon name="arrow-down-narrow-wide" size={11} />
           Sorted: focus → RAG → asks → priority → score
@@ -124,6 +134,9 @@ export default function DashboardView() {
             <ProjectCard key={p.id} p={p}
               onOpen={() => setRoute({ tab: 'project', projectId: p.id })}
               onToggleFocus={identity.isOwner ? () => updateProject(p.id, { focus: !p.focus }) : null}
+              selectable={identity.isOwner}
+              selected={selection.includes(p.id)}
+              onToggleSelect={() => toggleSelect(p.id)}
               viewMode={viewMode} />
           ))}
         </section>
@@ -134,23 +147,30 @@ export default function DashboardView() {
   )
 }
 
-export function ProjectCard({ p, onOpen, onToggleFocus, viewMode }) {
+export function ProjectCard({ p, onOpen, onToggleFocus, viewMode, selectable, selected, onToggleSelect }) {
   const r = ragMeta[p.rag]
   const pr = priorityMeta[p.priority]
   const isFocus = p.focus
   return (
     <article
       onClick={onOpen}
-      className={'card-hover relative bg-white rounded-xl pl-5 pr-5 pt-5 pb-4 flex flex-col gap-3 ' + (isFocus ? 'focused-ring' : r.border)}>
+      className={'card-hover relative bg-white rounded-xl pl-5 pr-5 pt-5 pb-4 flex flex-col gap-3 ' + (isFocus ? 'focused-ring' : r.border) + (selected ? ' ring-2 ring-indigo-500' : '')}>
       {isFocus && (
         <div className="absolute -top-2 left-4 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-semibold tracking-wider uppercase shadow-sm">
           <Icon name="star" size={10} /> Focus
         </div>
       )}
       <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold tracking-tight leading-snug">{p.name}</h3>
-          <p className="text-[12px] text-slate-500 mt-0.5">{p.category} · <span className="text-slate-700">{p.owner}</span></p>
+        <div className="min-w-0 flex items-start gap-2">
+          {selectable && (
+            <input type="checkbox" checked={selected} onChange={onToggleSelect} onClick={e => e.stopPropagation()}
+              className="mt-1 h-4 w-4 accent-indigo-600 cursor-pointer shrink-0"
+              title="Select for bulk actions" />
+          )}
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold tracking-tight leading-snug">{p.name}</h3>
+            <p className="text-[12px] text-slate-500 mt-0.5">{p.category} · <span className="text-slate-700">{p.owner}</span></p>
+          </div>
         </div>
         {onToggleFocus && (
           <button
