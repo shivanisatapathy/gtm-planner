@@ -35,15 +35,25 @@ export function useClickOutside(ref, onClose) {
 // ============================================================================
 // Identity prompt
 // ============================================================================
+const OWNER_PASSWORD = 'Precious31'
+
 function IdentityModal({ onSubmit }) {
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
+  const [pwError, setPwError] = useState(false)
+
+  const isOwnerName = name.trim().toLowerCase() === 'shivani'
+
   function submit(e) {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
-    const isOwner = trimmed.toLowerCase() === 'shivani'
-    onSubmit({ name: trimmed, isOwner })
+    if (isOwnerName) {
+      if (password !== OWNER_PASSWORD) { setPwError(true); return }
+    }
+    onSubmit({ name: trimmed, isOwner: isOwnerName })
   }
+
   return (
     <div className="modal-backdrop">
       <form className="modal" onSubmit={submit}>
@@ -58,10 +68,19 @@ function IdentityModal({ onSubmit }) {
         </div>
         <label className="text-[12px] font-medium text-slate-700 block">
           Your name
-          <input autoFocus value={name} onChange={e => setName(e.target.value)}
+          <input autoFocus value={name} onChange={e => { setName(e.target.value); setPwError(false) }}
             placeholder="Your name"
             className="mt-1 w-full h-9 px-2.5 rounded-md border border-slate-200 text-[13px]" />
         </label>
+        {isOwnerName && (
+          <label className="text-[12px] font-medium text-slate-700 block mt-3">
+            Owner password
+            <input type="password" autoFocus value={password} onChange={e => { setPassword(e.target.value); setPwError(false) }}
+              placeholder="Enter password"
+              className={'mt-1 w-full h-9 px-2.5 rounded-md border text-[13px] ' + (pwError ? 'border-rose-400 bg-rose-50' : 'border-slate-200')} />
+            {pwError && <span className="text-[11px] text-rose-600 mt-1 block">Incorrect password.</span>}
+          </label>
+        )}
         <div className="flex justify-end gap-2 mt-5">
           <button type="submit" className="btn-primary">Continue</button>
         </div>

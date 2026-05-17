@@ -43,6 +43,7 @@ function ProjectDetailInner({ project }) {
   const { updateProject, deleteProject, setRoute, viewMode, identity } = useStore()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const canEdit = identity.isOwner
+  const canEditAsk = true  // all logged-in users can submit asks to leadership
 
   function patch(p) { updateProject(project.id, p) }
   function patchScoring(p) {
@@ -169,7 +170,7 @@ function ProjectDetailInner({ project }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-[11px] uppercase tracking-wider text-indigo-700/80 font-medium mb-1">The ask</div>
-                <Editable tag="div" canEdit={canEdit} value={project.askText || (canEdit ? 'Click to add the ask…' : 'No outstanding ask.')} onCommit={v => patch({ askText: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
+                <Editable tag="div" canEdit={canEditAsk} value={project.askText || 'Click to add the ask…'} onCommit={v => patch({ askText: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wider text-indigo-700/80 font-medium mb-1">Shivani's recommendation</div>
