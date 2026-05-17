@@ -252,9 +252,32 @@ function DateField({ value, canEdit, onChange }) {
 
 function Editable({ tag = 'div', value, canEdit, onCommit, className = '' }) {
   const cls = 'whitespace-pre-wrap ' + (canEdit ? 'editable ' : '') + className
-  if (tag === 'h1') return <h1 contentEditable={canEdit} suppressContentEditableWarning className={cls} onBlur={e => canEdit && onCommit(e.target.innerText)}>{value}</h1>
-  if (tag === 'span') return <span contentEditable={canEdit} suppressContentEditableWarning className={cls} onBlur={e => canEdit && onCommit(e.target.innerText)}>{value}</span>
-  return <div contentEditable={canEdit} suppressContentEditableWarning className={cls} onBlur={e => canEdit && onCommit(e.target.innerText)}>{value}</div>
+  const ref = useRef(null)
+
+  // Sync prop value to DOM only when the element is not focused.
+  // Without this guard, React re-renders triggered by Supabase real-time events
+  // overwrite in-progress typed content, causing edits to silently revert.
+  useEffect(() => {
+    const el = ref.current
+    if (el && document.activeElement !== el) el.innerText = value ?? ''
+  }, [value])
+
+  if (!canEdit) {
+    if (tag === 'h1') return <h1 className={cls}>{value}</h1>
+    if (tag === 'span') return <span className={cls}>{value}</span>
+    return <div className={cls}>{value}</div>
+  }
+
+  const editProps = {
+    ref,
+    contentEditable: true,
+    suppressContentEditableWarning: true,
+    className: cls,
+    onBlur: e => onCommit(e.currentTarget.innerText),
+  }
+  if (tag === 'h1') return <h1 {...editProps} />
+  if (tag === 'span') return <span {...editProps} />
+  return <div {...editProps} />
 }
 
 function FieldPicker({ value, options, onChange, canEdit }) {
