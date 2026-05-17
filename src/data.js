@@ -289,19 +289,16 @@ export function weekRange(date) {
 
 export function fmtWeekRange(date) {
   const { monday, sunday } = weekRange(date)
-  const sameMonth = monday.getMonth() === sunday.getMonth()
   const monStr = monday.toLocaleDateString("en-GB", { month: "short", day: "numeric" })
-  const sunStr = sameMonth
-    ? sunday.toLocaleDateString("en-GB", { day: "numeric" })
-    : sunday.toLocaleDateString("en-GB", { month: "short", day: "numeric" })
+  const sunStr = sunday.toLocaleDateString("en-GB", { month: "short", day: "numeric" })
   const year = sunday.getFullYear()
-  return `${monStr} – ${sunStr}, ${year}`
+  return `${monStr} - ${sunStr} ${year}`
 }
 
 export function fmtWeekLabel(date) {
   const wk = isoWeek(date)
   const yr = date.getFullYear() % 100
-  return `Week ${wk} of FY${String(yr).padStart(2, "0")}`
+  return `Week ${wk} of FY'${String(yr).padStart(2, "0")}`
 }
 
 export function fmtDate(iso) {

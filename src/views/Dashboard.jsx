@@ -65,7 +65,7 @@ export default function DashboardView() {
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight">Portfolio overview</h1>
           <p className="text-[13px] text-slate-500 mt-1">
-            {projects.length} active {projects.length === 1 ? 'project' : 'projects'} · {fmtWeekLabel(new Date()).toLowerCase()} ·{' '}
+            {projects.length} active {projects.length === 1 ? 'project' : 'projects'} · {fmtWeekLabel(new Date())} ·{' '}
             <span className="inline-flex items-center gap-1">
               {viewMode === 'exec' ? <><Icon name="briefcase" size={11} />Exec view</> : <><Icon name="wrench" size={11} />Ops view</>}
             </span>
