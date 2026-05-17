@@ -170,11 +170,11 @@ function ProjectDetailInner({ project }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-[11px] uppercase tracking-wider text-indigo-700/80 font-medium mb-1">The ask</div>
-                <Editable tag="div" canEdit={canEditAsk} value={project.askText || 'Click to add the ask…'} onCommit={v => patch({ askText: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
+                <Editable tag="div" canEdit={canEditAsk} value={project.askText} placeholder="Click to add the ask…" onCommit={v => patch({ askText: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wider text-indigo-700/80 font-medium mb-1">Shivani's recommendation</div>
-                <Editable tag="div" canEdit={canEdit} value={project.askRecommendation || (canEdit ? 'Click to add a recommendation…' : '—')} onCommit={v => patch({ askRecommendation: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
+                <Editable tag="div" canEdit={canEdit} value={project.askRecommendation} placeholder={canEdit ? 'Click to add a recommendation…' : '—'} onCommit={v => patch({ askRecommendation: v })} className="text-[13px] text-indigo-900/90 leading-relaxed" />
               </div>
             </div>
           </div>
@@ -270,7 +270,7 @@ function DateField({ value, canEdit, onChange }) {
   )
 }
 
-function Editable({ tag = 'div', value, canEdit, onCommit, className = '' }) {
+function Editable({ tag = 'div', value, placeholder = '', canEdit, onCommit, className = '' }) {
   const cls = 'whitespace-pre-wrap ' + (canEdit ? 'editable ' : '') + className
   const ref = useRef(null)
 
@@ -283,9 +283,17 @@ function Editable({ tag = 'div', value, canEdit, onCommit, className = '' }) {
   }, [value])
 
   if (!canEdit) {
-    if (tag === 'h1') return <h1 className={cls}>{value}</h1>
-    if (tag === 'span') return <span className={cls}>{value}</span>
-    return <div className={cls}>{value}</div>
+    const display = value || placeholder
+    if (tag === 'h1') return <h1 className={cls}>{display}</h1>
+    if (tag === 'span') return <span className={cls}>{display}</span>
+    return <div className={cls}>{display}</div>
+  }
+
+  function handleKeyDown(e) {
+    // Enter commits (Shift+Enter inserts newline)
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur() }
+    // Escape cancels: restore prop value and blur
+    if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.innerText = value ?? ''; e.currentTarget.blur() }
   }
 
   const editProps = {
@@ -293,7 +301,9 @@ function Editable({ tag = 'div', value, canEdit, onCommit, className = '' }) {
     contentEditable: true,
     suppressContentEditableWarning: true,
     className: cls,
-    onBlur: e => onCommit(e.currentTarget.innerText),
+    'data-placeholder': placeholder,
+    onBlur: e => onCommit(e.currentTarget.innerText.trim()),
+    onKeyDown: handleKeyDown,
   }
   if (tag === 'h1') return <h1 {...editProps} />
   if (tag === 'span') return <span {...editProps} />
