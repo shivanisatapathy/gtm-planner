@@ -106,17 +106,6 @@ function ExecBrief() {
           )}
         </BriefCard>
 
-        <div className="rounded-xl p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #6D28D9 50%, #9333EA 100%)' }}>
-          <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/70 mb-2"><Icon name="sparkles" size={12} /> Strategic question</div>
-            <h3 className="text-[20px] font-semibold tracking-tight leading-snug max-w-[640px]">
-              We're investing heavily in AI agents (5 projects, ~30% of effort). Are we resourcing the underlying data + tooling layer (Clay, Gong path, recording capture) at the same pace, or building agents on sand?
-            </h3>
-            <p className="text-[13px] text-white/80 mt-3 max-w-[640px]">Recommended discussion at the Tuesday GTM review. Data-layer choices unblock both the prospecting agent and deal intelligence path.</p>
-          </div>
-        </div>
       </div>
     </div>
   )
