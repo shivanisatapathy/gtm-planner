@@ -11,8 +11,8 @@ export default function DecisionsLogView() {
   const feed = useMemo(() => {
     const rows = []
     projects.forEach(p => {
-      (p.decisions || []).forEach(d => rows.push({ ...d, kind: 'decision', project: p, sortKey: parseDate(d.date) }))
-      (p.comments || []).forEach(c => rows.push({ ...c, kind: 'comment', project: p, sortKey: parseWhen(c.when) }))
+      ;(p.decisions || []).forEach(d => rows.push({ ...d, kind: 'decision', project: p, sortKey: parseDate(d.date) }))
+      ;(p.comments || []).forEach(c => rows.push({ ...c, kind: 'comment', project: p, sortKey: parseWhen(c.when) }))
     })
     rows.sort((a, b) => b.sortKey - a.sortKey)
     return rows
