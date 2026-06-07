@@ -22,7 +22,7 @@ function StatTile({ label, value, sub, icon, accent }) {
 }
 
 export default function DashboardView() {
-  const { projects, filter, setFilter, setRoute, viewMode, updateProject, identity, selection, toggleSelect, selectAll, clearSelection } = useStore()
+  const { projects, filter, setFilter, setRoute, viewMode, updateProject, toggleHidden, identity, selection, toggleSelect, selectAll, clearSelection } = useStore()
   const [showAdd, setShowAdd] = useState(false)
 
   const stats = useMemo(() => {
@@ -38,6 +38,7 @@ export default function DashboardView() {
 
   const filtered = useMemo(() => {
     let list = projects.slice()
+    if (!identity.isOwner) list = list.filter(p => !p.hidden)
     if (filter === 'focus') list = list.filter(p => p.focus)
     else if (filter === 'decision') list = list.filter(p => p.decision)
     else if (filter === 'red') list = list.filter(p => p.rag === 'red')
@@ -134,6 +135,7 @@ export default function DashboardView() {
             <ProjectCard key={p.id} p={p}
               onOpen={() => setRoute({ tab: 'project', projectId: p.id })}
               onToggleFocus={identity.isOwner ? () => updateProject(p.id, { focus: !p.focus }) : null}
+              onToggleHidden={identity.isOwner ? () => toggleHidden(p.id) : null}
               selectable={identity.isOwner}
               selected={selection.includes(p.id)}
               onToggleSelect={() => toggleSelect(p.id)}
@@ -147,17 +149,23 @@ export default function DashboardView() {
   )
 }
 
-export function ProjectCard({ p, onOpen, onToggleFocus, viewMode, selectable, selected, onToggleSelect }) {
+export function ProjectCard({ p, onOpen, onToggleFocus, onToggleHidden, viewMode, selectable, selected, onToggleSelect }) {
   const r = ragMeta[p.rag]
   const pr = priorityMeta[p.priority]
   const isFocus = p.focus
+  const isHidden = !!p.hidden
   return (
     <article
       onClick={onOpen}
-      className={'card-hover relative bg-white rounded-xl pl-5 pr-5 pt-5 pb-4 flex flex-col gap-3 ' + (isFocus ? 'focused-ring' : r.border) + (selected ? ' ring-2 ring-indigo-500' : '')}>
+      className={'card-hover relative bg-white rounded-xl pl-5 pr-5 pt-5 pb-4 flex flex-col gap-3 ' + (isFocus ? 'focused-ring' : r.border) + (selected ? ' ring-2 ring-indigo-500' : '') + (isHidden ? ' opacity-50' : '')}>
       {isFocus && (
         <div className="absolute -top-2 left-4 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-semibold tracking-wider uppercase shadow-sm">
           <Icon name="star" size={10} /> Focus
+        </div>
+      )}
+      {isHidden && (
+        <div className="absolute -top-2 right-4 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-semibold tracking-wider uppercase shadow-sm">
+          <Icon name="eye-off" size={10} /> Hidden
         </div>
       )}
       <header className="flex items-start justify-between gap-3">
@@ -172,14 +180,24 @@ export function ProjectCard({ p, onOpen, onToggleFocus, viewMode, selectable, se
             <p className="text-[12px] text-slate-500 mt-0.5">{p.category} · <span className="text-slate-700">{p.owner}</span></p>
           </div>
         </div>
-        {onToggleFocus && (
-          <button
-            onClick={e => { e.stopPropagation(); onToggleFocus() }}
-            title={isFocus ? 'Unpin from focus' : 'Pin to focus'}
-            className={'shrink-0 h-7 w-7 grid place-items-center rounded-md hover:bg-slate-50 ' + (isFocus ? 'text-amber-500' : 'text-slate-300 hover:text-amber-500')}>
-            <Icon name="star" size={15} />
-          </button>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {onToggleHidden && (
+            <button
+              onClick={e => { e.stopPropagation(); onToggleHidden() }}
+              title={isHidden ? 'Unhide project' : 'Hide project'}
+              className={'h-7 w-7 grid place-items-center rounded-md hover:bg-slate-50 ' + (isHidden ? 'text-slate-400 hover:text-slate-600' : 'text-slate-300 hover:text-slate-500')}>
+              <Icon name={isHidden ? 'eye' : 'eye-off'} size={14} />
+            </button>
+          )}
+          {onToggleFocus && (
+            <button
+              onClick={e => { e.stopPropagation(); onToggleFocus() }}
+              title={isFocus ? 'Unpin from focus' : 'Pin to focus'}
+              className={'h-7 w-7 grid place-items-center rounded-md hover:bg-slate-50 ' + (isFocus ? 'text-amber-500' : 'text-slate-300 hover:text-amber-500')}>
+              <Icon name="star" size={15} />
+            </button>
+          )}
+        </div>
       </header>
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium">{p.stage}</span>
