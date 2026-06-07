@@ -480,6 +480,8 @@ export default function App() {
     if (!p) return
     updateProject(id, { hidden: !p.hidden })
   }
+
+  function sync() {
     setSyncing(true)
     setTimeout(() => { setSyncing(false); setLastSynced(Date.now()) }, 900)
   }
