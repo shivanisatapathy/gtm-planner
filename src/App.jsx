@@ -454,7 +454,7 @@ export default function App() {
       rag: 'unknown', priority: 'medium', stage: 'Discovery', score: 30,
       target: partial.target || 'TBD',
       updated: 'just now', updatedDays: 0,
-      focus: false, decision: false,
+      focus: false, decision: false, hidden: false,
       businessCase: partial.businessCase || '',
       ragReason: '', successMetrics: '', estCost: '', revenueImpact: '',
       stakeholders: [], askText: '', askRecommendation: '',
@@ -475,7 +475,11 @@ export default function App() {
     markSaving()
   }
 
-  function sync() {
+  function toggleHidden(id) {
+    const p = projects.find(p => p.id === id)
+    if (!p) return
+    updateProject(id, { hidden: !p.hidden })
+  }
     setSyncing(true)
     setTimeout(() => { setSyncing(false); setLastSynced(Date.now()) }, 900)
   }
@@ -562,7 +566,7 @@ export default function App() {
 
   const store = {
     identity, signIn, signOut,
-    projects, updateProject, addProject, deleteProject,
+    projects, updateProject, addProject, deleteProject, toggleHidden,
     route, setRoute,
     viewMode, setViewMode,
     filter, setFilter,
